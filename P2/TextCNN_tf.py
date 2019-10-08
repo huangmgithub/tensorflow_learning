@@ -2,6 +2,7 @@ import numpy as np
 import re
 import itertools
 from collections import Counter
+import jieba
 
 def cut(string):
     """切词"""
