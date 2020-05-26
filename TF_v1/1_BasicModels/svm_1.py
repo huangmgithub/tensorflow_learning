@@ -5,30 +5,21 @@ from sklearn import datasets
 import random
 import sys
 
-##### Flags #####
-tf.app.flags.DEFINE_integer('batch_size', 32,
-                            'Number of samples per batch.')
+##### Params #####
+batch_size = 32
 
-tf.app.flags.DEFINE_integer('num_steps', 500,
-                            'Number of steps for training.')
+num_steps = 500
 
-tf.app.flags.DEFINE_float(
-    'C_param', 0.1,
-    'penalty parameter of the error term.')
+C_param = 0.1
 
-tf.app.flags.DEFINE_float(
-    'Reg_param', 1.0,
-    'penalty parameter of the error term.')
+Reg_param = 1.0
 
-tf.app.flags.DEFINE_float(
-    'delta', 1.0,
-    'The parameter set for margin.')
+delta = 1.0
 
-tf.app.flags.DEFINE_float(
-    'initial_learning_rate', 0.1,
-    'The initial learning rate for optimization.')
+initial_learning_rate = 0.1
 
-FLAGS = tf.app.flags.FLAGS
+is_evaluation = True
+
 
 
 ##### Functions #####
@@ -36,8 +27,8 @@ FLAGS = tf.app.flags.FLAGS
 def loss_fn(W, b, x_data, y_target):
     logits = tf.subtract(tf.matmul(x_data, W), b)
     norm_term = tf.divide(tf.reduce_sum(tf.multiply(tf.transpose(W), W)), 2)
-    classification_loss = tf.reduce_mean(tf.maximum(0., tf.subtract(FLAGS.delta, tf.multiply(logits, y_target))))
-    total_loss = tf.add(tf.multiply(FLAGS.C_param, classification_loss), tf.multiply(FLAGS.Reg_param, norm_term))
+    classification_loss = tf.reduce_mean(tf.maximum(0., tf.subtract(delta, tf.multiply(logits, y_target))))
+    total_loss = tf.add(tf.multiply(C_param, classification_loss), tf.multiply(Reg_param, norm_term))
     return total_loss
 
 
@@ -47,7 +38,7 @@ def inference_fn(W, b, x_data, y_target):
     return accuracy
 
 
-def next_batch_fn(x_train, y_train, num_samples=FLAGS.batch_size):
+def next_batch_fn(x_train, y_train, num_samples=batch_size):
     index = np.random.choice(len(x_train), size=num_samples)
     X_batch = x_train[index]
     y_batch = np.transpose([y_train[index]])
@@ -92,7 +83,7 @@ total_loss = loss_fn(W, b, x_data, y_target)
 accuracy = inference_fn(W, b, x_data, y_target)
 
 # Defining train_op
-train_op = tf.train.GradientDescentOptimizer(FLAGS.initial_learning_rate).minimize(total_loss)
+train_op = tf.train.GradientDescentOptimizer(initial_learning_rate).minimize(total_loss)
 
 ###############
 ### Session ###
@@ -106,10 +97,10 @@ sess.run(init)
 ###############################
 ### Training the Linear SVM ###
 ###############################
-for step_idx in range(FLAGS.num_steps):
+for step_idx in range(num_steps):
 
     # Get the batch of data.
-    X_batch, y_batch = next_batch_fn(x_train, y_train, num_samples=FLAGS.batch_size)
+    X_batch, y_batch = next_batch_fn(x_train, y_train, num_samples=batch_size)
 
     # Run the optimizer.
     sess.run(train_op, feed_dict={x_data: X_batch, y_target: y_batch})
@@ -124,7 +115,7 @@ for step_idx in range(FLAGS.num_steps):
         print('Step #%d, training accuracy= %% %.2f, testing accuracy= %% %.2f ' % (
         step_idx, float(100 * train_acc_step), float(100 * test_acc_step)))
 
-if FLAGS.is_evaluation:
+if is_evaluation:
     [[w1], [w2]] = sess.run(W)
     [[bias]] = sess.run(b)
     x_line = [data[1] for data in X]

@@ -7,30 +7,15 @@ from tensorflow.examples.tutorials.mnist import input_data
 from sklearn.decomposition import PCA
 
 #######################
-### Necessary Flags ###
+### Necessary Params ###
 #######################
 
-tf.app.flags.DEFINE_integer('batch_size', 50,
-                            'Number of samples per batch.')
-
-tf.app.flags.DEFINE_integer('num_steps', 1000,
-                            'Number of steps for training.')
-
-tf.app.flags.DEFINE_integer('log_steps', 50,
-                            'Number of steps per each display.')
-
-tf.app.flags.DEFINE_boolean('is_evaluation', True,
-                            'Whether or not the model should be evaluated.')
-
-tf.app.flags.DEFINE_float(
-    'gamma', -15.0,
-    'penalty parameter of the error term.')
-
-tf.app.flags.DEFINE_float(
-    'initial_learning_rate', 0.01,
-    'The initial learning rate for optimization.')
-
-FLAGS = tf.app.flags.FLAGS
+batch_size = 50
+num_steps = 1000
+log_steps = 50
+is_evaluation = True
+gamma = -15.0
+initial_learning_rate = 0.01
 
 
 ###########################
@@ -43,8 +28,8 @@ def cross_class_label_fn(A):
     :param A: The input matrix of size (num_classes, batch_size).
     :return: The output matrix of size (num_classes, batch_size, batch_size).
     """
-    label_class_i = tf.reshape(A, [num_classes, 1, FLAGS.batch_size])
-    label_class_j = tf.reshape(label_class_i, [num_classes, FLAGS.batch_size, 1])
+    label_class_i = tf.reshape(A, [num_classes, 1, batch_size])
+    label_class_j = tf.reshape(label_class_i, [num_classes, batch_size, 1])
     returned_mat = tf.matmul(label_class_j, label_class_i)
     return returned_mat
 
@@ -153,10 +138,10 @@ label_placeholder = tf.placeholder(shape=[num_classes, None], dtype=tf.float32)
 pred_placeholder = tf.placeholder(shape=[None, num_fetures], dtype=tf.float32)
 
 # The alpha variable for solving the dual optimization problem.
-alpha = tf.Variable(tf.random_normal(shape=[num_classes, FLAGS.batch_size]))
+alpha = tf.Variable(tf.random_normal(shape=[num_classes, batch_size]))
 
 # Gaussian (RBF) kernel
-gamma = tf.constant(FLAGS.gamma)
+gamma = tf.constant(gamma)
 
 # RBF kernel
 my_kernel = kernel_fn(data_placeholder, gamma)
@@ -175,16 +160,16 @@ prediction = tf.arg_max(prediction_output - tf.expand_dims(tf.reduce_mean(predic
 accuracy = tf.reduce_mean(tf.cast(tf.equal(prediction, tf.argmax(label_placeholder, 0)), tf.float32))
 
 # Optimizer
-train_op = tf.train.AdamOptimizer(FLAGS.initial_learning_rate).minimize(loss)
+train_op = tf.train.AdamOptimizer(initial_learning_rate).minimize(loss)
 
 # Variables Initialization.
 init = tf.global_variables_initializer()
 sess.run(init)
 
 # Training loop
-for i in range(FLAGS.num_steps):
+for i in range(num_steps):
 
-    batch_X, batch_y = next_batch(x_train, y_train, FLAGS.batch_size)
+    batch_X, batch_y = next_batch(x_train, y_train, batch_size)
     sess.run(train_op, feed_dict={data_placeholder: batch_X, label_placeholder: batch_y})
 
     temp_loss = sess.run(loss, feed_dict={data_placeholder: batch_X, label_placeholder: batch_y})
@@ -193,11 +178,11 @@ for i in range(FLAGS.num_steps):
                                                    label_placeholder: batch_y,
                                                    pred_placeholder: batch_X})
 
-    batch_X_test, batch_y_test = next_batch(x_test, y_test, FLAGS.batch_size)
+    batch_X_test, batch_y_test = next_batch(x_test, y_test, batch_size)
     acc_test_batch = sess.run(accuracy, feed_dict={data_placeholder: batch_X_test,
                                                   label_placeholder: batch_y_test,
                                                   pred_placeholder: batch_X_test})
 
-    if (i + 1) % FLAGS.log_steps == 0:
+    if (i + 1) % log_steps == 0:
         print('Step #%d, Loss= %f, training accuracy= %f, testing accuracy= %f ' % (
             (i+1), temp_loss, acc_train_batch, acc_test_batch))
